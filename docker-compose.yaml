@@ -1,0 +1,20 @@
+services:
+  nominatim:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "nominatim:${NOMINATIM_VERSION}"
+    container_name: nominatim
+    env_file:
+      - .env
+    depends_on:
+      - db
+  db:
+    image: "postgres:${DATABASE_VERSION}"
+    restart: always
+    environment:
+      POSTGRES_USER: "${DATABASE_USER}"
+      POSTGRES_DATABASE: "${DATABASE_NAME}"
+      POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
+    ports:
+      - "${DATABASE_PORT}:${DATABASE_PORT}"
