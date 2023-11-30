@@ -1,20 +1,14 @@
-FROM ubuntu:22.04
+FROM python:3.10
 
-# Required software
+# Required packages
 # ---------------------------------------------------------------------------------------------------------------
-ENV DEBIAN_FRONTEND=noninteractive
-
 RUN apt update -qq
 RUN apt install -y build-essential cmake g++ libboost-dev libboost-system-dev \
                     libboost-filesystem-dev libexpat1-dev zlib1g-dev \
-                    libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \
-                    nlohmann-json3-dev postgresql-14-postgis-3 \
-                    postgresql-contrib-14 postgresql-14-postgis-3-scripts \
-                    php-cli php-pgsql php-intl libicu-dev python3-dotenv \
-                    python3-psycopg2 python3-psutil python3-jinja2 \
-                    python3-icu python3-datrie python3-sqlalchemy \
-                    python3-asyncpg python3-yaml \
-                    wget
+                    libbz2-dev liblua5.3-dev lua5.3 lua-dkjson \
+                    nlohmann-json3-dev \
+                    php-cli php-pgsql php-intl libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Dedicated user account
 # ---------------------------------------------------------------------------------------------------------------
@@ -23,12 +17,26 @@ ENV USERHOME=/srv/nominatim
 
 RUN useradd -d ${USERHOME} -s /bin/bash -m ${USERNAME}
 
-USER ${USERNAME}
-
 RUN chmod a+x ${USERHOME}
+
+# Starlette
+# ---------------------------------------------------------------------------------------------------------------
+EXPOSE 8000
+WORKDIR ${USERHOME}/nominatim-project
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=${USERHOME}/nominatim-project:${PYTHONPATH}
+
+COPY --chown=${USERNAME}:${USERNAME} requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=${USERNAME}:${USERNAME} . .
 
 # Nominatim
 # ---------------------------------------------------------------------------------------------------------------
+USER ${USERNAME}
 WORKDIR ${USERHOME}
 
 RUN wget https://nominatim.org/release/Nominatim-4.3.2.tar.bz2
@@ -42,6 +50,4 @@ RUN make install
 
 ENV PATH=${USERHOME}/bin:$PATH
 
-# Project
-# ---------------------------------------------------------------------------------------------------------------
-WORKDIR ${USERHOME}/nominatim-project
+CMD ["uvicorn", "example:app"]

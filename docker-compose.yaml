@@ -7,6 +7,11 @@ services:
     container_name: nominatim
     env_file:
       - .env
+    command: uvicorn example:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/srv/nominatim/nominatim-project
+    ports:
+      - "${STARLETTE_PORT}:${STARLETTE_PORT}"
     depends_on:
       - db
   db:
