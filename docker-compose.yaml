@@ -27,7 +27,6 @@ services:
       POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
     volumes:
       - nominatim-db-data:/var/lib/postgresql/data
-      - ./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
 volumes:
