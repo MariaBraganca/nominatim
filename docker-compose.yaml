@@ -15,11 +15,20 @@ services:
     depends_on:
       - db
   db:
-    image: "postgres:${DATABASE_VERSION}"
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    image: "nominatim-postgres:${DATABASE_VERSION}"
+    container_name: nominatim-postgres
     restart: always
     environment:
       POSTGRES_USER: "${DATABASE_USER}"
       POSTGRES_DATABASE: "${DATABASE_NAME}"
       POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
+    volumes:
+      - nominatim-db-data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
+volumes:
+  nominatim-db-data:
