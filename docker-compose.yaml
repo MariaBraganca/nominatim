@@ -16,7 +16,7 @@ services:
       - db
   db:
     build:
-      context: ./postgres
+      context: ./postgresql
       dockerfile: Dockerfile
     image: "nominatim-postgres:${DATABASE_VERSION}"
     container_name: nominatim-postgres
@@ -27,7 +27,7 @@ services:
       POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
     volumes:
       - nominatim-db-data:/var/lib/postgresql/data
-      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgresql/postgresql.conf:/etc/postgresql/postgresql.conf
     ports:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
 volumes:
