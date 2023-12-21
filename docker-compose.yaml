@@ -5,13 +5,11 @@ services:
       dockerfile: Dockerfile
     image: "nominatim:${NOMINATIM_VERSION}"
     container_name: nominatim
+    command: ["tail", "-f", "/dev/null"]
     env_file:
       - .env
-    command: uvicorn example:app --host ${STARLETTE_HOST} --port ${STARLETTE_PORT}
-    volumes:
-      - .:/srv/nominatim/nominatim-project
-    ports:
-      - "${STARLETTE_PORT}:${STARLETTE_PORT}"
+    expose:
+      - ${NOMINATIM_PORT}
     depends_on:
       - db
   db:
@@ -29,5 +27,20 @@ services:
       - nominatim-db-data:/var/lib/postgresql/data
     ports:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
+  starlette:
+    build:
+      context: ./starlette
+      dockerfile: Dockerfile
+    image: "starlette:${STARLETTE_VERSION}"
+    container_name: nominatim-starlette
+    command: "gunicorn -b ${STARLETTE_HOST}:${STARLETTE_PORT} -w 4 -k uvicorn.workers.UvicornWorker example:app"
+    env_file:
+      - .env
+    volumes:
+      - ./starlette:/srv/nominatim/nominatim-project
+    ports:
+      - "${STARLETTE_PORT}:${STARLETTE_PORT}"
+    depends_on:
+      - nominatim
 volumes:
   nominatim-db-data:

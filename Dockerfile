@@ -1,15 +1,22 @@
-FROM python:3.10
+FROM ubuntu:22.04
 
-EXPOSE 8000
+EXPOSE 8080
 
 # Required packages
 # ---------------------------------------------------------------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update -qq && apt-get install -y \
     build-essential cmake g++ libboost-dev libboost-system-dev \
     libboost-filesystem-dev libexpat1-dev zlib1g-dev \
-    libbz2-dev liblua5.3-dev lua5.3 lua-dkjson \
-    nlohmann-json3-dev \
-    php-cli php-pgsql php-intl libicu-dev \
+    libbz2-dev libpq-dev liblua5.3-dev lua5.3 lua-dkjson \
+    nlohmann-json3-dev postgresql-14-postgis-3 \
+    postgresql-contrib-14 postgresql-14-postgis-3-scripts \
+    php-cli php-pgsql php-intl libicu-dev python3-dotenv \
+    python3-psycopg2 python3-psutil python3-jinja2 \
+    python3-icu python3-datrie python3-sqlalchemy \
+    python3-asyncpg python3-yaml \
+    wget \
 && rm -rf /var/lib/apt/lists/*
 
 # Dedicated user account
@@ -41,19 +48,4 @@ RUN rm ${USERHOME}/Nominatim-4.3.2.tar.bz2
 
 ENV PATH=${USERHOME}/bin:$PATH
 
-# Starlette
-# ---------------------------------------------------------------------------------------------------------------
 WORKDIR ${USERHOME}/nominatim-project
-
-COPY --chown=${USERNAME}:${USERNAME} requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-COPY --chown=${USERNAME}:${USERNAME} . .
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=${USERHOME}/nominatim-project:${PYTHONPATH}
-ENV PATH=${USERHOME}/.local/bin:$PATH
-
-CMD ["uvicorn", "example:app", "--host", "0.0.0.0", "--port", "8000"]
