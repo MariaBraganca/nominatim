@@ -1,9 +1,11 @@
-FROM postgres:16
+FROM postgres:14-bookworm
 
 EXPOSE 5432
 
 # Required packages
 # ---------------------------------------------------------------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+
 ENV POSTGIS_MAJOR=3
 ENV POSTGIS_VERSION=3.4.1+dfsg-1.pgdg120+1
 
