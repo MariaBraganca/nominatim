@@ -17,18 +17,15 @@ RUN apt-get update -qq  \
         postgresql-${PG_MAJOR}-postgis-${POSTGIS_MAJOR}-scripts \
     && rm -rf /var/lib/apt/lists/*
 
-# Enabling PostGIS
+# Create Roles
 # ---------------------------------------------------------------------------------------------------------------
 ARG DOCKER_ENTRYPOINT_DIR=/docker-entrypoint-initdb.d
 
 RUN mkdir -p $DOCKER_ENTRYPOINT_DIR
-COPY ./enable_postgis.sh $DOCKER_ENTRYPOINT_DIR/enable_postgis.sh
+COPY ./create_roles.sh $DOCKER_ENTRYPOINT_DIR/create_roles.sh
 
 # Tuning the PostgreSQL database
 # ---------------------------------------------------------------------------------------------------------------
-ARG USERNAME=postgres
-ARG CONFIG_DIR=/etc/postgresql
-
-COPY --chown=${USERNAME}:${USERNAME} ./postgresql.conf ${CONFIG_DIR}/postgresql.conf
+COPY ./postgresql.conf /etc/postgresql/postgresql.conf
 
 CMD ["-c", "config_file=/etc/postgresql/postgresql.conf"]

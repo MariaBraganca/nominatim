@@ -20,8 +20,6 @@ services:
     container_name: nominatim-postgres
     restart: always
     environment:
-      POSTGRES_USER: "${DATABASE_USER}"
-      POSTGRES_DATABASE: "${DATABASE_NAME}"
       POSTGRES_PASSWORD: "${DATABASE_PASSWORD}"
     volumes:
       - nominatim-db-data:/var/lib/postgresql/data
