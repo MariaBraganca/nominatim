@@ -72,7 +72,7 @@ ENV PATH=${INSTALL}/bin:$PATH
 
 # Data
 # ---------------------------------------------------------------------------------------------------------------
-WORKDIR ${USERHOME}/nominatim-data
+WORKDIR ${USERHOME}/nominatim-project
 
 COPY --chown=$USERNAME:$USERNAME import.sh ${INSTALL}/bin/import.sh
 RUN chmod u+x ${INSTALL}/bin/import.sh

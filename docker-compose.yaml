@@ -5,9 +5,10 @@ services:
       dockerfile: Dockerfile
     image: "nominatim:${NOMINATIM_VERSION}"
     container_name: nominatim
-    command: ["tail", "-f", "/dev/null"]
     env_file:
       - .env
+    volumes:
+      - nominatim-project:/srv/nominatim/nominatim-project
     expose:
       - ${NOMINATIM_PORT}
     depends_on:
@@ -41,4 +42,5 @@ services:
     depends_on:
       - nominatim
 volumes:
+  nominatim-project:
   nominatim-db-data:
