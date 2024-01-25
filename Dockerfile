@@ -1,22 +1,50 @@
-FROM python:3.10
+FROM debian:bookworm
 
-EXPOSE 8000
+EXPOSE 8080
 
 # Required packages
 # ---------------------------------------------------------------------------------------------------------------
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update -qq && apt-get install -y \
-    build-essential cmake g++ libboost-dev libboost-system-dev \
-    libboost-filesystem-dev libexpat1-dev zlib1g-dev \
-    libbz2-dev liblua5.3-dev lua5.3 lua-dkjson \
+    # For compiling:
+    cmake \
+    libexpat1-dev \
+    libproj-dev \
+    lbzip2 \
+    libbz2-dev \
+    zlib1g-dev \
+    libicu-dev \
     nlohmann-json3-dev \
-    php-cli php-pgsql php-intl libicu-dev \
+    libboost-dev \
+    libboost-system-dev \
+    libboost-filesystem-dev \
+    postgresql-client-15 \
+    g++ \
+    liblua5.4-dev \
+    libpq-dev \
+    python3-dev \
+    php \
+    # For running:
+    python3-dotenv \
+    python3-psycopg2 \
+    python3-psutil \
+    python3-jinja2 \
+    python3-sqlalchemy \
+    python3-asyncpg \
+    python3-icu \
+    python3-yaml \
+    python3-datrie \
+    # For getting the source code:
+    wget \
+    curl \
 && rm -rf /var/lib/apt/lists/*
 
 # Dedicated user account
 # ---------------------------------------------------------------------------------------------------------------
-ENV USERNAME=nominatim
-ENV USERID=1001
-ENV USERHOME=/srv/nominatim
+ARG USERNAME=nominatim
+ARG USERID=1001
+ARG USERHOME=/srv/nominatim
 
 RUN groupadd -r --gid ${USERID} ${USERNAME}
 RUN useradd --uid ${USERID} --gid ${USERID} -d ${USERHOME} -s /bin/bash -m ${USERNAME}
@@ -28,32 +56,25 @@ USER ${USERNAME}
 # Nominatim
 # ---------------------------------------------------------------------------------------------------------------
 WORKDIR ${USERHOME}
+ARG NOMINATIM_VERSION=4.3.2
+ARG INSTALL=${USERHOME}/install
 
-RUN wget https://nominatim.org/release/Nominatim-4.3.2.tar.bz2
-RUN tar xf Nominatim-4.3.2.tar.bz2
+RUN wget https://nominatim.org/release/Nominatim-${NOMINATIM_VERSION}.tar.bz2 \
+    && tar xf Nominatim-${NOMINATIM_VERSION}.tar.bz2 \
+    && mkdir ${USERHOME}/build \
+    && cd ${USERHOME}/build \
+    && cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} ${USERHOME}/Nominatim-${NOMINATIM_VERSION} \
+    && make \
+    && make install \
+    && rm ${USERHOME}/Nominatim-${NOMINATIM_VERSION}.tar.bz2
 
-WORKDIR ${USERHOME}/build
+ENV PATH=${INSTALL}/bin:$PATH
 
-RUN cmake -DCMAKE_INSTALL_PREFIX=${USERHOME} ${USERHOME}/Nominatim-4.3.2
-RUN make
-RUN make install
-RUN rm ${USERHOME}/Nominatim-4.3.2.tar.bz2
-
-ENV PATH=${USERHOME}/bin:$PATH
-
-# Starlette
+# Data
 # ---------------------------------------------------------------------------------------------------------------
 WORKDIR ${USERHOME}/nominatim-project
 
-COPY --chown=${USERNAME}:${USERNAME} requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+COPY --chown=$USERNAME:$USERNAME import.sh ${INSTALL}/bin/import.sh
+RUN chmod u+x ${INSTALL}/bin/import.sh
 
-COPY --chown=${USERNAME}:${USERNAME} . .
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=${USERHOME}/nominatim-project:${PYTHONPATH}
-ENV PATH=${USERHOME}/.local/bin:$PATH
-
-CMD ["uvicorn", "example:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["import.sh"]
